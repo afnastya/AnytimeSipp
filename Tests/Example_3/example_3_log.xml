@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <map>
+        <width>10</width>
+        <height>5</height>
+        <startx>2</startx>
+        <starty>3</starty>
+        <finishx>10</finishx>
+        <finishy>3</finishy>
+        <grid>
+            <row>1 1 0 1 1 1 0 1 1 1</row>
+            <row>1 1 0 1 1 1 0 1 1 1</row>
+            <row>0 0 0 0 0 0 0 0 0 0</row>
+            <row>1 1 0 1 1 1 0 1 1 1</row>
+            <row>1 1 0 1 1 1 0 1 1 1</row>
+        </grid>
+        <dynamicobstacles>
+            <obstacle id="1">
+                <point x="10" y="3" time="0"/>
+                <point x="1" y="3" time="9"/>
+                <point x="10" y="3" time="18"/>
+            </obstacle>
+        </dynamicobstacles>
+    </map>
+    <options>
+        <searchtype>sipp</searchtype>
+        <metrictype>manhattan</metrictype>
+        <hweight>1.0</hweight>
+        <allowdiagonal>false</allowdiagonal>
+        <cutcorners>false</cutcorners>
+        <allowsqueeze>false</allowsqueeze>
+    </options>
+    <log>
+        <summary pathlength="15" numberofsteps="17" searchtime="0.00022900000000000001"/>
+        <path>
+            <point x="2" y="3" time="0"/>
+            <point x="3" y="3" time="1"/>
+            <point x="3" y="2" time="2"/>
+            <point x="3" y="2" time="2"/>
+            <point x="3" y="3" time="8"/>
+            <point x="10" y="3" time="15"/>
+        </path>
+    </log>
+</root>
