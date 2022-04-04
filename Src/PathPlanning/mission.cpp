@@ -44,7 +44,9 @@ bool Mission::RunTask() {
 
 void Mission::SaveResultToOutputDocument() {
     std::string outputFile(fileName);
+    outputFile.insert(outputFile.rfind('/'), "/../logs");
     outputFile.insert(outputFile.size() - 4, "_log");
+    std::cout << outputFile << std::endl;
 
 
     tinyxml2::XMLElement *root = inputDoc.FirstChildElement("root");
@@ -70,6 +72,9 @@ void Mission::SavePathToOutputDocument(tinyxml2::XMLElement *log) {
 }
 
 void Mission::WriteResultToConsole() {
-    std::cout << (searchResult.pathfound ? "Path is found" : "Path is not found!") << "\n";
+    std::cout << "Path is " << (searchResult.pathfound ? "" : "not ") << "found!\n";
     std::cout << "Path Length: " << searchResult.pathlength << "\n";
+    std::cout << "Nodes created: " << searchResult.nodescreated << "\n";
+    std::cout << "Number of steps: " << searchResult.numberofsteps << "\n";
+    std::cout << "Search time: " << searchResult.searchtime << "\n";
 }

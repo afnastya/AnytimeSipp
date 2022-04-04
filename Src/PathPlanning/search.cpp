@@ -16,7 +16,7 @@ Sipp::~Sipp() {
 }
 
 long long hash(int i, int j, int k) {
-    return ((i * 1000) + j) * 1000 + k;
+    return ((i * 10000) + j) * 10000 + k;
 }
 
 SearchResult Sipp::startSearch(Map& map, const EnvironmentOptions& options) {
@@ -152,6 +152,7 @@ double distance(Node* start, Node* finish) {
 }
 
 void Sipp::generatePath(Node* goal) {
+    std::cout << "Generating the path\n";
     Node* now = goal;
     while (now != nullptr) {
         lppath.push_front(*now);
@@ -173,11 +174,16 @@ void Sipp::generatePath(Node* goal) {
             it3 = --it1;
             ++it1;
 
-            if (it3->g > hppath.back().g + 1) { // 1 = cost
+            int dist = distance(&(*it3), &hppath.back());
+            if (it3->g > hppath.back().g + dist) {              // needs to wait
                 hppath.push_back(hppath.back());
-            }
+                hppath.push_back(*it3);
 
-            hppath.push_back(*it3);
+                auto secondFromEnd = ++hppath.rbegin();
+                secondFromEnd->g = hppath.back().g - dist;
+            } else {
+                hppath.push_back(*it3);
+            }
         }
 
         prevDistance = distance(&(*it3), &(*it1));

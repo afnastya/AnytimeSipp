@@ -101,7 +101,7 @@ anim = animation.FuncAnimation(fig, update, interval=5, blit=True, repeat=True,
 
 print("Animation is created, ready to save")
 
-# plt.show()
+plt.show()
 
-writermp4 = animation.writers['ffmpeg'](fps=60)
-anim.save(input_file[:-4] + '.mp4', writermp4)
+# writermp4 = animation.writers['ffmpeg'](fps=60)
+# anim.save(input_file[:-4] + '.mp4', writermp4)
