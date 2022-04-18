@@ -1,10 +1,11 @@
 #include "map.h"
+#include <algorithm>
 #include <sstream>
+#include "vector.h"
 
 #define INF 1'000'000'000
 
 Map::Map() {
-
 }
 
 bool Map::getMap(tinyxml2::XMLElement* map_tag) {
@@ -69,11 +70,15 @@ bool Map::getMap(tinyxml2::XMLElement* map_tag) {
             point->QueryIntAttribute("y", &y);
             point->QueryDoubleAttribute("time", &time);
 
-            dynamicObstacles.back().path.emplace_back(x - 1, y - 1, time);
+            dynamicObstacles.back().path.emplace_back(x - 1, y - 1, time * cost);
         }
     }
 
     return true;
+}
+
+int Map::getCost() const {
+    return cost;
 }
 
 bool Map::CellIsTraversable(int i, int j) const {
@@ -104,62 +109,49 @@ const std::vector<Interval>& Map::operator()(int i, int j) const {
     return map[i][j];
 }
 
-int vectorProduct(int x1, int y1, int x2, int y2) {
-    return x1 * y2 - x2 * y1;
-}
-
-int scalarProduct(int x1, int y1, int x2, int y2) {
-    return x1 * x2 + y1 * y2;
-}
-
-bool CellBelongsToPath(int i, int j, const PathComponent& p1, const PathComponent& p2) {
-    return vectorProduct(j - p1.x, i - p1.y, p2.x - p1.x, p2.y - p1.y) == 0
-           && scalarProduct(j - p1.x, i - p1.y, p2.x - p1.x, p2.y - p1.y) >= 0
-           && scalarProduct(j - p2.x, i - p2.y, p1.x - p2.x, p1.y - p2.y) >= 0;
-}
-
 void Map::setIntervals(int i, int j) {
     if (!map[i][j].empty()) {
         return;
     }
 
+    std::vector<Interval> collision_intervals;
+
     for (const auto& obstacle : dynamicObstacles) {
         auto& path = obstacle.path;
         for (int point_i = 1; point_i < path.size(); ++point_i) {
-            if (!CellBelongsToPath(i, j, path[point_i - 1], path[point_i])) {
+            Vector<int> Cell(j, i);
+            Vector<int> P1(path[point_i - 1].x, path[point_i - 1].y);
+            Vector<int> P2(path[point_i].x, path[point_i].y);
+            if (!PointOnSegment(Cell, P1, P2)) {
                 continue;
             }
 
-            map[i][j].emplace_back(
+            collision_intervals.emplace_back(
                 false,
-                path[point_i - 1].time + abs(j - path[point_i - 1].x) + abs(i - path[point_i - 1].y) - 0.5,
-                path[point_i - 1].time + abs(j - path[point_i - 1].x) + abs(i - path[point_i - 1].y) + 0.5
+                path[point_i - 1].time + getDistance(i, j, path[point_i - 1].y, path[point_i - 1].x) - cost / 2,
+                path[point_i - 1].time + getDistance(i, j, path[point_i - 1].y, path[point_i - 1].x) + cost / 2
             );
         }
     }
 
     std::sort(
-        map[i][j].begin(),
-        map[i][j].end(),
+        collision_intervals.begin(),
+        collision_intervals.end(),
         [](const Interval& i1, const Interval& i2) { return i1.startTime < i2.startTime; }
     );
 
-    if (map[i][j].empty()) {
+    if (collision_intervals.empty()) {
         map[i][j].emplace_back(true, 0, INF);
         return;
     }
 
-    // for (int interval = 0; interval < map[i][j].size(); ++interval) {
-        // if (map[i][j][interval].isSafe == false) {
-        //     double safeStart = map[i][j][interval].endTime;
-        //     double safeEnd = INF;
-        //     if (interval + 1 < map[i][j].size()) {
-        //         safeEnd = map[i][j][interval + 1].startTime;
-        //     }
+    for (const Interval& interval : collision_intervals) {
+        if (map[i][j].empty() || interval.startTime > map[i][j].back().endTime) {
+            map[i][j].emplace_back(interval);
+        }
 
-        //     map[i][j].insert(map[i][j].begin() + interval + 1, {true, safeStart, safeEnd});
-        // }
-    // }
+        map[i][j].back().endTime = std::max(map[i][j].back().endTime, interval.endTime);
+    }
 
     if (map[i][j][0].startTime > 0) {
         map[i][j].emplace_back(true, map[i][j].back().endTime, INF);
@@ -181,71 +173,32 @@ void Map::setIntervals(int i, int j) {
             map[i][j][interval].endTime = map[i][j][interval + 1].startTime;
         }
     }
-
-    // if (map[i][j][0].startTime > 0) {
-    //     double safeEnd = INF;
-    //     if (1 < map[i][j].size()) {
-    //         safeEnd = map[i][j][0].startTime;
-    //     }
-
-    //     map[i][j].insert(map[i][j].begin(), {true, 0, safeEnd});
-    // }
 }
 
-int Map::getSafeIntervalId(int i, int j, double time) const {
-    for (int interval = 0; interval < map[i][j].size(); ++interval) {
-        if (map[i][j][interval].endTime > time) {
-            return interval;
-        }
-    }
+int Map::getDistance(int i1, int j1, int i2, int j2) const {
+    return (abs(i2 - i1) + abs(j2 - j1)) * cost;
 }
 
-double Map::getIntervalStart(int i, int j, int interval) const {
+int Map::getSafeIntervalId(int i, int j, int time) const {
+    static auto Compare = [] (const int time, const Interval& interval) {
+        return time < interval.endTime;
+    };
+
+    return std::upper_bound(map[i][j].begin(), map[i][j].end(), time, Compare) - map[i][j].begin();
+}
+
+int Map::getIntervalStart(int i, int j, int interval) const {
     return map[i][j][interval].startTime;
 }
 
-double Map::getIntervalEnd(int i, int j, int interval) const {
+int Map::getIntervalEnd(int i, int j, int interval) const {
     return map[i][j][interval].endTime;
 }
 
-void Map::printIntervals(int i, int j) {
+void Map::printIntervals(int i, int j) const {
     std::cout << "i = " << i << ", j = " << j << "\nIntervals:";
     for (auto& interval : map[i][j]) {
-        std::cout << "{" << interval.isSafe << ", " << interval.startTime << ", " << interval.endTime << "}\n";
+        std::cout << "{" << interval.isSafe << ", " << interval.startTime << ", " << interval.endTime << "} ";
     }
+    std::cout << "\n";
 }
-
-// int Map::getEarliestSafeIntervalId(int i, int j, double time) {
-//     for (int interval = 0; interval < map[i][j].size(); ++i) {
-//         if (map[i][j][interval].endTime > time) {
-//             if (map[i][j][interval].startTime > time) {
-//                 --interval;
-//             }
-
-//             return (interval + 1) * 2 - (map[i][j][0] == 0);
-//         }
-//     }
-
-//     return map[i][j].size();
-// }
-
-// double Map::getSafeIntervalStart(int i, int j, int interval) {
-//     return 0;
-// }
-
-// double Map::getSafeIntervalEnd(int i, int j, int interval) {
-//     interval /= 2;
-//     if (interval >= map[i][j].size()) {
-//         return 0;   // invalid argument
-//     }
-
-//     if (map[i][j][0].startTime == 0) {
-//         if (interval + 1 >= map[i][j].size()) {
-//             return 0; // invalid argument
-//         }
-
-//         return map[i][j][interval + 1].startTime;
-//     }
-
-//     return map[i][j][interval].startTime;
-// }

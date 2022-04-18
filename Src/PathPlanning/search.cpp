@@ -6,7 +6,7 @@ auto NodeCompare = [](const Node* lhs, const Node* rhs) {
 };
 
 
-Sipp::Sipp() : OPEN(NodeCompare) {
+Sipp::Sipp(int _logLevel) : OPEN(NodeCompare), logLevel(_logLevel) {
 }
 
 Sipp::~Sipp() {
@@ -31,7 +31,7 @@ SearchResult Sipp::startSearch(Map& map, const EnvironmentOptions& options) {
         start.second,
         0,
         0,
-        getHeuristic(start.first, start.second, map, options),
+        getHeuristic(start.first, start.second, map),
         options.hweight,
         nullptr
     );
@@ -45,25 +45,23 @@ SearchResult Sipp::startSearch(Map& map, const EnvironmentOptions& options) {
         OPEN.erase(OPEN.begin());
         CLOSE.insert(now);
 
-        // std::cout << now->i << " " << now->j << " " << now->interval <<"\n";
+        if (logLevel > 2) {
+            std::cout << "i = " << now->i << " j = " << now->j << " interval = " << now->interval 
+                      << " g = " << now->g << std::endl;
+        }
 
         if (now->i == goal.first && now->j == goal.second) {
-            generatePath(now);
+            generatePath(now, map);
             setSearchResult(true);
             auto endTime = std::chrono::system_clock::now();
             sresult.searchtime = std::chrono::duration<double>(endTime - startTime).count();
             return sresult;
         }
 
-        for (auto [successor, cost] : getSuccessors(now, map, options)) {
+        for (auto [successor, new_g] : getSuccessors(now, map, options)) {
             if (CLOSE.contains(successor)) {
                 continue;
             }
-
-            double new_g = std::max(
-                now->g + cost,
-                map(successor->i, successor->j, successor->interval).startTime + cost / 2
-            );
             
             if (successor->g > new_g) {
                 OPEN.erase(successor);
@@ -85,13 +83,13 @@ SearchResult Sipp::startSearch(Map& map, const EnvironmentOptions& options) {
 }
 
 
-std::vector<std::pair<Node*, double>> Sipp::getSuccessors(Node* node, Map& map, const EnvironmentOptions& options) {
-    std::vector<std::pair<Node*, double>> successors;
+std::vector<std::pair<Node*, int>> Sipp::getSuccessors(Node* node, Map& map, const EnvironmentOptions& options) {
+    std::vector<std::pair<Node*, int>> successors;
 
     for (int i = std::max(0, node->i - 1); i < std::min(node->i + 2, map.getHeight()); ++i) {
         for (int j = std::max(0, node->j - 1); j < std::min(node->j + 2, map.getWidth()); ++j) {
             if (map.CellIsTraversable(i, j)) {
-                double cost = 1.0;
+                int cost = map.getCost();
                 if ((i + j) % 2 == (node->i + node->j) % 2) {
                     if (!checkDiagonalSuccessor(node, i, j, map, options)) {
                         continue;
@@ -99,36 +97,46 @@ std::vector<std::pair<Node*, double>> Sipp::getSuccessors(Node* node, Map& map, 
                     cost = sqrt(2);
                 }
 
-                double minTime = node->g + cost;
-                double maxTime = map(node->i, node->j, node->interval).endTime;
+                int minTime = node->g + cost / 2;        // min time when (node->i, node->j) will be free
+                int maxTime = map(node->i, node->j, node->interval).endTime; // max time when (node->i, node->j) will be free
+
+                if (logLevel > 2) {
+                    std::cout << "minTime: " << minTime << " maxTime: " << maxTime << std::endl;
+                }
+
                 if (minTime >= maxTime) {
                     continue;
                 }
 
-
                 map.setIntervals(i, j);
 
-                int interval = map.getSafeIntervalId(i, j, minTime);
-                if (interval >= map(i, j).size() || map(i, j, interval).startTime >= maxTime) {
-                    continue;
+                if (logLevel > 2) {
+                    map.printIntervals(i, j);
                 }
+
+                uint32_t interval = map.getSafeIntervalId(i, j, minTime);
 
                 for (; interval < map(i, j).size() && map(i, j, interval).startTime < maxTime; ++interval) {
                     Node* successor = cells2nodes[hash(i, j, interval)];
+                    int new_g = std::max(
+                        node->g + cost,
+                        map(i, j, interval).startTime + cost / 2
+                    );
+
                     if (successor == nullptr) {
                         successor = new Node(
                             i,
                             j,
                             interval,
-                            std::max(node->g + cost, map(i, j, interval).startTime + cost / 2),
-                            getHeuristic(i, j, map, options),
+                            new_g,
+                            getHeuristic(i, j, map),
                             options.hweight,
                             node
                         );
                         cells2nodes[hash(i, j, interval)] = successor;
                         OPEN.insert(successor);
                     }
-                    successors.push_back({successor, cost});
+                    successors.push_back({successor, new_g});
                 }
             }
         }
@@ -148,14 +156,18 @@ bool Sipp::checkDiagonalSuccessor(Node* node, int i, int j, const Map& map, cons
 }
 
 double distance(Node* start, Node* finish) {
-    return sqrt(pow(finish->i - start->i, 2) + pow(finish->j - start->j, 2));
+    return abs(finish->i - start->i) + abs(finish->j - start->j);
 }
 
-void Sipp::generatePath(Node* goal) {
-    std::cout << "Generating the path\n";
+void Sipp::generatePath(Node* goal, const Map& map) {
+    if (logLevel > 1) {
+        std::cout << "Generating the path\n";
+    }
+
     Node* now = goal;
     while (now != nullptr) {
         lppath.push_front(*now);
+        lppath.front().g /= map.getCost();
         now = now->parent;
     }
 
@@ -190,6 +202,11 @@ void Sipp::generatePath(Node* goal) {
         ++it1;
     }
 
+    int dist = distance(&hppath.back(), &lppath.back());
+    if (lppath.back().g > hppath.back().g + dist) {
+        hppath.push_back(hppath.back());
+        hppath.back().g = lppath.back().g - dist;
+    }
     hppath.push_back(lppath.back());
 }
 
@@ -201,21 +218,7 @@ void Sipp::setSearchResult(bool pathFound) {
     sresult.nodescreated = OPEN.size() + CLOSE.size();
 }
 
-double Sipp::getHeuristic(int i, int j, const Map& map, const EnvironmentOptions& options) {
+double Sipp::getHeuristic(int i, int j, const Map& map) {
     auto [goal_i, goal_j] = map.getGoalCell();
-    int di = abs(i - goal_i), dj = abs(j - goal_j);
-    return di + dj; // manhattan
-
-    // switch (options.metrictype) {
-    //     case 0:
-    //         return sqrt(2) * std::min(di, dj) + abs(di - dj);
-    //     case 1:
-    //         return di + dj;
-    //     case 2:
-    //         return sqrt(pow(di, 2) + pow(dj, 2));
-    //     case 3:
-    //         return std::max(di, dj);
-    //     default:
-    //         return 0;
-    // }
+    return map.getDistance(i, j, goal_i, goal_j);
 }

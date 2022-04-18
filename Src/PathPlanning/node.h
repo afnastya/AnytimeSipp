@@ -1,11 +1,11 @@
 #pragma once
 
 struct Node {
-    int     i, j, interval;
-    double  F, g, H, w;
+    int     i, j, interval, g;
+    double  F, H, w;
     Node    *parent;
 
-    Node(int _i, int _j, int _interval, double _g, double _H, double _w, Node* _parent) {
+    Node(int _i, int _j, int _interval, int _g, double _H, double _w, Node* _parent) {
         i = _i;
         j = _j;
         interval = _interval;
@@ -17,6 +17,6 @@ struct Node {
     }
 
     void updateF() {
-        F = g + w * H;
+        F = w * H + g;
     }
 };

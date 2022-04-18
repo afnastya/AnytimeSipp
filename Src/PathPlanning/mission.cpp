@@ -1,7 +1,11 @@
 #include "mission.h"
 #include "tinyxml2.h"
 
-Mission::Mission(const char* taskFile) : fileName(taskFile) {
+Mission::Mission(const char* taskFile, int _logLevel)
+    : fileName(taskFile), logLevel(_logLevel) {
+        if (logLevel >= 0) {
+            std::cout << fileName << (logLevel == 0 ? "," : "\n");
+        }
 }
 
 Mission::~Mission() {
@@ -35,10 +39,19 @@ bool Mission::ParseTask() {
     return true;
 }
 
+void Mission::SetHweight(double hweight) {
+    options.hweight = hweight;
+}
+
 bool Mission::RunTask() {
-    search = new Sipp();
+    search = new Sipp(logLevel);
 
     searchResult = search->startSearch(map, options);
+
+    if (logLevel == 0) {
+        WriteTestResult();
+    }
+
     return true;
 }
 
@@ -46,8 +59,6 @@ void Mission::SaveResultToOutputDocument() {
     std::string outputFile(fileName);
     outputFile.insert(outputFile.rfind('/'), "/../logs");
     outputFile.insert(outputFile.size() - 4, "_log");
-    std::cout << outputFile << std::endl;
-
 
     tinyxml2::XMLElement *root = inputDoc.FirstChildElement("root");
     tinyxml2::XMLElement *log = root->InsertNewChildElement("log");
@@ -59,10 +70,14 @@ void Mission::SaveResultToOutputDocument() {
     SavePathToOutputDocument(log);
 
     inputDoc.SaveFile(&outputFile[0]);
+    if (logLevel > 0) {
+        std::cout << "Results are saved to " << outputFile << std::endl;
+    }
 }
 
 void Mission::SavePathToOutputDocument(tinyxml2::XMLElement *log) {
     tinyxml2::XMLElement *path = log->InsertNewChildElement("path");
+    path->SetAttribute("hweight", options.hweight);
     for (auto& node : *searchResult.hppath) {
         auto *point = path->InsertNewChildElement("point");
         point->SetAttribute("x", node.j + 1);
@@ -77,4 +92,15 @@ void Mission::WriteResultToConsole() {
     std::cout << "Nodes created: " << searchResult.nodescreated << "\n";
     std::cout << "Number of steps: " << searchResult.numberofsteps << "\n";
     std::cout << "Search time: " << searchResult.searchtime << "\n";
+}
+
+void Mission::WriteTestResult() {
+    std::cout << map.getWidth() << "," << map.getHeight() << ","
+              << map.dynamicObstacles.size() << "," 
+              << options.hweight << ","
+              << searchResult.pathfound << ","
+              << searchResult.pathlength << ","
+              << searchResult.nodescreated << ","
+              << searchResult.numberofsteps << ","
+              << searchResult.searchtime << "\n";
 }

@@ -20,7 +20,7 @@
 
 class Sipp {
 public:
-    Sipp();
+    Sipp(int _logLevel = -1);
     ~Sipp();
     SearchResult startSearch(Map& map, const EnvironmentOptions& options);
 
@@ -30,11 +30,11 @@ private:
     std::unordered_map<long long, Node*>                    cells2nodes;
     std::set<Node*, std::function<bool(Node*, Node*)>>      OPEN;
     std::unordered_set<Node*>                               CLOSE;
+    int                                                     logLevel;
 
-
-    std::vector<std::pair<Node*, double>> getSuccessors(Node* node, Map& map, const EnvironmentOptions &options);
+    std::vector<std::pair<Node*, int>> getSuccessors(Node* node, Map& map, const EnvironmentOptions &options);
     bool checkDiagonalSuccessor(Node* node, int i, int j, const Map& map, const EnvironmentOptions &options);
-    void generatePath(Node* goal);
+    void generatePath(Node* goal, const Map& map);
     void setSearchResult(bool pathFound);
-    double getHeuristic(int i, int j, const Map& map, const EnvironmentOptions& options);
+    double getHeuristic(int i, int j, const Map& map);
 };

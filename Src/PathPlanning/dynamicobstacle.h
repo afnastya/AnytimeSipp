@@ -4,10 +4,15 @@
 struct PathComponent {
     int x;
     int y;
-    double time;
+    int time;
 
     PathComponent() {}
-    PathComponent(int _x, int _y, double _time) : x(_x), y(_y), time(_time) {}
+    PathComponent(int _x, int _y, int _time) : x(_x), y(_y), time(_time) {}
+
+    friend std::ostream& operator<<(std::ostream& out, const PathComponent& p) {
+        out << "(" << p.x << ", " << p.y << ", " << p.time << ")";
+        return out;
+    }
 };
 
 struct Obstacle {

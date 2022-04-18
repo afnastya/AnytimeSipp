@@ -7,11 +7,11 @@
 
 struct Interval {
     bool isSafe;
-    double startTime;
-    double endTime;
+    int startTime;
+    int endTime;
 
     Interval() {}
-    Interval(bool _isSafe, double _startTime, double _endTime) : isSafe(_isSafe), startTime(_startTime), endTime(_endTime) {}
+    Interval(bool _isSafe, int _startTime, int _endTime) : isSafe(_isSafe), startTime(_startTime), endTime(_endTime) {}
     bool operator==(const Interval& other) {
         return startTime == other.startTime && endTime == other.endTime;
     }
@@ -22,6 +22,7 @@ private:
     int width, height;
     int start_i, start_j;
     int goal_i, goal_j;
+    int cost = 10;
 public:
     std::vector<std::vector<std::vector<Interval>>> map;
     std::vector<Obstacle> dynamicObstacles;
@@ -35,15 +36,17 @@ public:
     int getHeight() const;
     std::pair<int, int> getStartCell() const;
     std::pair<int, int> getGoalCell() const;
+    int getCost() const;
+    int getDistance(int i1, int j1, int i2, int j2) const;
 
     bool CellIsTraversable(int i, int j) const;
     const Interval& operator()(int i, int j, int interval) const;
     const std::vector<Interval>& operator()(int i, int j) const;
 
     void setIntervals(int i, int j);
-    int getSafeIntervalId(int i, int j, double time) const;
-    double getIntervalStart(int i, int j, int interval) const;
-    double getIntervalEnd(int i, int j, int interval) const;
+    int getSafeIntervalId(int i, int j, int time) const;
+    int getIntervalStart(int i, int j, int interval) const;
+    int getIntervalEnd(int i, int j, int interval) const;
 
-    void printIntervals(int i, int j);
+    void printIntervals(int i, int j) const;
 };
