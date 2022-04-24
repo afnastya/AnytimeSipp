@@ -36,7 +36,9 @@ SearchResult Sipp::startSearch(Map& map, const EnvironmentOptions& options) {
         nullptr
     );
 
-    OPEN.insert(cells2nodes[hash(start.first, start.second, 0)]);
+    if (map(start.first, start.second, 0).startTime == 0) {
+        OPEN.insert(cells2nodes[hash(start.first, start.second, 0)]);
+    }
 
     while (!OPEN.empty()) {
         ++sresult.numberofsteps;
@@ -155,7 +157,7 @@ bool Sipp::checkDiagonalSuccessor(Node* node, int i, int j, const Map& map, cons
            (options.allowsqueeze && !nearCell1 && !nearCell2);
 }
 
-double distance(Node* start, Node* finish) {
+uint32_t distance(Node* start, Node* finish) {
     return abs(finish->i - start->i) + abs(finish->j - start->j);
 }
 
@@ -178,27 +180,24 @@ void Sipp::generatePath(Node* goal, const Map& map) {
 
     auto it1 = lppath.begin(), it3 = it1++, it2 = it1++;
     hppath.push_back(*it3);
-    double prevDistance = distance(&(*it3), &(*it2));
+    uint32_t startG = it3->g; 
     while (it1 != lppath.end()) {
         if ((it2->j - it3->j) * (it1->i - it3->i) - (it1->j - it3->j) * (it2->i - it3->i) != 0
-                || distance(&(*it3), &(*it1)) < prevDistance) {
+                || distance(&(*it3), &(*it1)) < it1->g - startG) {
+            bool shouldWait = distance(&(*it3), &(*it1)) < it1->g - startG;
             it2 = it1;
             it3 = --it1;
             ++it1;
 
-            int dist = distance(&(*it3), &hppath.back());
-            if (it3->g > hppath.back().g + dist) {              // needs to wait
-                hppath.push_back(hppath.back());
+            hppath.push_back(*it3);
+            if (shouldWait) {
                 hppath.push_back(*it3);
-
-                auto secondFromEnd = ++hppath.rbegin();
-                secondFromEnd->g = hppath.back().g - dist;
-            } else {
-                hppath.push_back(*it3);
+                hppath.back().g = it2->g - 1;   // 1 = cost
             }
+
+            startG = hppath.back().g;
         }
 
-        prevDistance = distance(&(*it3), &(*it1));
         ++it1;
     }
 

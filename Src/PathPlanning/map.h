@@ -15,6 +15,11 @@ struct Interval {
     bool operator==(const Interval& other) {
         return startTime == other.startTime && endTime == other.endTime;
     }
+
+    friend std::ostream& operator<<(std::ostream& out, const Interval& interval) {
+        out << "{" << interval.isSafe << ", " << interval.startTime << ", " << interval.endTime << "}";
+        return out;
+    }
 };
 
 class Map {
@@ -22,7 +27,7 @@ private:
     int width, height;
     int start_i, start_j;
     int goal_i, goal_j;
-    int cost = 10;
+    static const int cost = 10;
 public:
     std::vector<std::vector<std::vector<Interval>>> map;
     std::vector<Obstacle> dynamicObstacles;

@@ -61,7 +61,7 @@ public:
         return in;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, Vector A) {
+    friend std::ostream& operator<<(std::ostream& out, const Vector A) {
         out << A.x << " " << A.y << "\n";
         return out;
     }
@@ -90,11 +90,13 @@ public:
         return SegmentIntersectsLine(A, B, C, D)
                && SegmentIntersectsLine(C, D, A, B)
                && std::min(A.x, B.x) <= std::max(C.x, D.x)
-               && std::min(C.x, D.x) <= std::max(A.x, B.x);
+               && std::min(C.x, D.x) <= std::max(A.x, B.x)
+               && std::min(A.y, B.y) <= std::max(C.y, D.y)
+               && std::min(C.y, D.y) <= std::max(A.y, B.y);
     }
 
-    friend std::variant<Intersection, Vector<double>> GetIntersection(Vector A, Vector B, Vector C, Vector D) {
-        if (A == B && PointOnSegment(A, C, D) || C == D && PointOnSegment(C, A, B)) {
+    friend std::variant<Intersection, Vector<int>> GetIntersection(Vector A, Vector B, Vector C, Vector D) {
+        if ((A == B && PointOnSegment(A, C, D)) || (C == D && PointOnSegment(C, A, B))) {
             return Intersection::POINT;
         }
 
@@ -112,8 +114,8 @@ public:
             }
         }
 
-        double k = (double(VectorProduct(C - A, C - B)) / (VectorProduct(C - A, C - D) + VectorProduct(C - D, C - B)));
-        Vector<double> E = Vector(D - C) * k + C;
-        return E;
+        // double k = (double(VectorProduct(C - A, C - B)) / (VectorProduct(C - A, C - D) + VectorProduct(C - D, C - B)));
+        // Vector<double> E = Vector(D - C) * k + C;
+        return (A.y == B.y ? Vector<int>(C.x, A.y) : Vector<int>(A.x, C.y));
     }
 };

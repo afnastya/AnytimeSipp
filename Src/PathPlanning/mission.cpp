@@ -3,13 +3,12 @@
 
 Mission::Mission(const char* taskFile, int _logLevel)
     : fileName(taskFile), logLevel(_logLevel) {
-        if (logLevel >= 0) {
-            std::cout << fileName << (logLevel == 0 ? "," : "\n");
+        if (logLevel >= 0 || logLevel == -2) {
+            std::cout << fileName << (logLevel == -2 ? "," : "\n");
         }
 }
 
 Mission::~Mission() {
-    delete search;
 }
 
 bool Mission::ParseTask() {
@@ -39,16 +38,12 @@ bool Mission::ParseTask() {
     return true;
 }
 
-void Mission::SetHweight(double hweight) {
-    options.hweight = hweight;
-}
-
 bool Mission::RunTask() {
-    search = new Sipp(logLevel);
+    search = std::make_shared<Sipp>(logLevel);
 
     searchResult = search->startSearch(map, options);
 
-    if (logLevel == 0) {
+    if (logLevel == -2) {
         WriteTestResult();
     }
 
@@ -67,7 +62,7 @@ void Mission::SaveResultToOutputDocument() {
     summary->SetAttribute("numberofsteps", searchResult.numberofsteps);
     summary->SetAttribute("searchtime", searchResult.searchtime);
 
-    SavePathToOutputDocument(log);
+    SavePathToOutputDocument(log, *searchResult.hppath);
 
     inputDoc.SaveFile(&outputFile[0]);
     if (logLevel > 0) {
@@ -75,10 +70,10 @@ void Mission::SaveResultToOutputDocument() {
     }
 }
 
-void Mission::SavePathToOutputDocument(tinyxml2::XMLElement *log) {
+void Mission::SavePathToOutputDocument(tinyxml2::XMLElement *log, const std::list<Node>& nodesPath) {
     tinyxml2::XMLElement *path = log->InsertNewChildElement("path");
-    path->SetAttribute("hweight", options.hweight);
-    for (auto& node : *searchResult.hppath) {
+    // path->SetAttribute("hweight", options.hweight);
+    for (auto& node : nodesPath) {
         auto *point = path->InsertNewChildElement("point");
         point->SetAttribute("x", node.j + 1);
         point->SetAttribute("y", node.i + 1);
@@ -88,7 +83,9 @@ void Mission::SavePathToOutputDocument(tinyxml2::XMLElement *log) {
 
 void Mission::WriteResultToConsole() {
     std::cout << "Path is " << (searchResult.pathfound ? "" : "not ") << "found!\n";
-    std::cout << "Path Length: " << searchResult.pathlength << "\n";
+    if (searchResult.pathfound) {
+        std::cout << "Path Length: " << searchResult.pathlength << "\n";
+    }
     std::cout << "Nodes created: " << searchResult.nodescreated << "\n";
     std::cout << "Number of steps: " << searchResult.numberofsteps << "\n";
     std::cout << "Search time: " << searchResult.searchtime << "\n";

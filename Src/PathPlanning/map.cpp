@@ -131,6 +131,10 @@ void Map::setIntervals(int i, int j) {
                 path[point_i - 1].time + getDistance(i, j, path[point_i - 1].y, path[point_i - 1].x) - cost / 2,
                 path[point_i - 1].time + getDistance(i, j, path[point_i - 1].y, path[point_i - 1].x) + cost / 2
             );
+
+            if (getDistance(i, j, path[point_i - 1].y, path[point_i - 1].x) == 0) {
+                collision_intervals.back().endTime = path[point_i].time + cost / 2;
+            }
         }
     }
 
@@ -198,7 +202,7 @@ int Map::getIntervalEnd(int i, int j, int interval) const {
 void Map::printIntervals(int i, int j) const {
     std::cout << "i = " << i << ", j = " << j << "\nIntervals:";
     for (auto& interval : map[i][j]) {
-        std::cout << "{" << interval.isSafe << ", " << interval.startTime << ", " << interval.endTime << "} ";
+        std::cout << interval << " ";
     }
     std::cout << "\n";
 }
