@@ -3,7 +3,7 @@
 #include <sstream>
 #include "vector.h"
 
-#define INF 1'000'000'000
+#define INF 100'000'000
 
 Map::Map() {
 }
@@ -29,7 +29,7 @@ bool Map::getMap(tinyxml2::XMLElement* map_tag) {
         }
     }
 
-    for (int i = 2; i < data_ptrs.size(); i++) {
+    for (uint32_t i = 2; i < data_ptrs.size(); i++) {
         *data_ptrs[i] -= 1;
     }
 
@@ -118,7 +118,7 @@ void Map::setIntervals(int i, int j) {
 
     for (const auto& obstacle : dynamicObstacles) {
         auto& path = obstacle.path;
-        for (int point_i = 1; point_i < path.size(); ++point_i) {
+        for (uint32_t point_i = 1; point_i < path.size(); ++point_i) {
             Vector<int> Cell(j, i);
             Vector<int> P1(path[point_i - 1].x, path[point_i - 1].y);
             Vector<int> P2(path[point_i].x, path[point_i].y);
@@ -165,7 +165,7 @@ void Map::setIntervals(int i, int j) {
             map[i][j][interval].startTime = interval == 0 ? 0 : map[i][j][interval - 1].endTime;
         }
     } else {
-        for (int interval = 0; interval < map[i][j].size(); ++interval) {
+        for (uint32_t interval = 0; interval < map[i][j].size(); ++interval) {
             map[i][j][interval].isSafe = true;
             map[i][j][interval].startTime = map[i][j][interval].endTime;
 

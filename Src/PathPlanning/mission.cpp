@@ -62,6 +62,9 @@ void Mission::SaveResultToOutputDocument() {
     summary->SetAttribute("numberofsteps", searchResult.numberofsteps);
     summary->SetAttribute("searchtime", searchResult.searchtime);
 
+    if (logLevel >= 3) {
+        SavePathToOutputDocument(log, *searchResult.lppath);
+    }
     SavePathToOutputDocument(log, *searchResult.hppath);
 
     inputDoc.SaveFile(&outputFile[0]);

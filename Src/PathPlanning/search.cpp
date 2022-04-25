@@ -201,11 +201,11 @@ void Sipp::generatePath(Node* goal, const Map& map) {
         ++it1;
     }
 
-    int dist = distance(&hppath.back(), &lppath.back());
-    if (lppath.back().g > hppath.back().g + dist) {
-        hppath.push_back(hppath.back());
-        hppath.back().g = lppath.back().g - dist;
-    }
+    // int dist = distance(&hppath.back(), &lppath.back());
+    // if (lppath.back().g > hppath.back().g + dist) {
+    //     hppath.push_back(hppath.back());
+    //     hppath.back().g = lppath.back().g - dist;
+    // }
     hppath.push_back(lppath.back());
 }
 
