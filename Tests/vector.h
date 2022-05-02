@@ -94,7 +94,7 @@ public:
                && std::min(C.y, D.y) <= std::max(A.y, B.y);
     }
 
-    friend std::variant<Intersection, Vector<double>> GetIntersection(Vector A, Vector B, Vector C, Vector D) {
+    friend std::variant<Intersection, Vector<int>> GetIntersection(Vector A, Vector B, Vector C, Vector D) {
         if ((A == B && PointOnSegment(A, C, D)) || (C == D && PointOnSegment(C, A, B))) {
             return Intersection::POINT;
         }
@@ -113,8 +113,8 @@ public:
             }
         }
 
-        double k = (double(VectorProduct(C - A, C - B)) / (VectorProduct(C - A, C - D) + VectorProduct(C - D, C - B)));
-        Vector<double> E = Vector(D - C) * k + C;
-        return E;
+        // double k = (double(VectorProduct(C - A, C - B)) / (VectorProduct(C - A, C - D) + VectorProduct(C - D, C - B)));
+        // Vector<double> E = Vector(D - C) * k + C;
+        return (A.y == B.y ? Vector<int>(C.x, A.y) : Vector<int>(A.x, C.y));
     }
 };

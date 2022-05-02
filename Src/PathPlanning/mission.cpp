@@ -62,9 +62,7 @@ void Mission::SaveResultToOutputDocument() {
     summary->SetAttribute("numberofsteps", searchResult.numberofsteps);
     summary->SetAttribute("searchtime", searchResult.searchtime);
 
-    if (logLevel >= 3) {
-        SavePathToOutputDocument(log, *searchResult.lppath);
-    }
+
     SavePathToOutputDocument(log, *searchResult.hppath);
 
     inputDoc.SaveFile(&outputFile[0]);
@@ -97,7 +95,6 @@ void Mission::WriteResultToConsole() {
 void Mission::WriteTestResult() {
     std::cout << map.getWidth() << "," << map.getHeight() << ","
               << map.dynamicObstacles.size() << "," 
-              << options.hweight << ","
               << searchResult.pathfound << ","
               << searchResult.pathlength << ","
               << searchResult.nodescreated << ","

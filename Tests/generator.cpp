@@ -8,13 +8,17 @@
 #include "../Src/PathPlanning/tinyxml2.h"
 #include "path.h"
 
+#define INF 100'000'000
+
 struct Task {
+    int start_x, start_y;
     int width, height;
     int obstacles_number;
     std::vector<std::vector<bool>> grid;
-    bool mightIntersect = true;
+    bool mightIntersect = false;
 };
 
+void ProcessMap(const std::filesystem::path& map_path, const std::vector<int>& obstacles_numbers, const std::string& output_dir);
 void ParseMap(const std::string& input_file, Task& task);
 void GenerateTask(Task& task, const std::string& output_file);
 void SetStartFinish(tinyxml2::XMLElement *map, Task& task);
@@ -22,33 +26,47 @@ void SetGrid(tinyxml2::XMLElement *grid, Task& task);
 void SetDynamicObstacles(tinyxml2::XMLElement *obstacles, Task& task);
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
-        std::cout << "Maps directory is not specified" << std::endl;
+    if (argc < 3) {
+        std::cout << "Maps' directory or output directory is not specified" << std::endl;
         return 0;
     }
 
-    std::filesystem::path maps_directory(argv[1]);
-    for (const auto& dir_entry : std::filesystem::directory_iterator{maps_directory}) {
+    std::vector<int> obstacles_numbers;
+    for (int arg = 3; arg < argc; ++arg) {
+        obstacles_numbers.push_back(std::stoi(argv[arg]));
+    }
+
+    std::filesystem::path maps_path(argv[1]);
+
+    if (!std::filesystem::is_directory(maps_path)) {
+        ProcessMap(maps_path, obstacles_numbers, argv[2]);
+    }
+
+    for (const auto& dir_entry : std::filesystem::directory_iterator{maps_path}) {
         auto map_path = dir_entry.path();
-        const std::string map_name = map_path.stem().string();
-        std::cout << map_name << "\n";
+        ProcessMap(map_path, obstacles_numbers, argv[2]);
+    }
+}
 
-        Task task;
-        ParseMap(map_path, task);
+void ProcessMap(const std::filesystem::path& map_path, const std::vector<int>& obstacles_numbers, const std::string& output_dir) {
+    const std::string map_name = map_path.stem().string();
+    std::cout << map_name << "\n";
 
-        for (int arg = 3; arg < argc; ++arg) {
-            task.obstacles_number = std::stoi(argv[arg]);
+    Task task;
+    ParseMap(map_path, task);
 
-            for (int task_id = 0; task_id < 5; ++task_id) {
-                std::string output_file = std::string(argv[2])
-                                          + "/" + map_name
-                                          + "_" + std::to_string(task.obstacles_number)
-                                          + "_" + std::to_string(task_id)
-                                          + ".xml";
-                std::cout << output_file << std::endl;
+    for (auto obstacles_number : obstacles_numbers) {
+        task.obstacles_number = obstacles_number;
 
-                GenerateTask(task, output_file);
-            }
+        for (int task_id = 0; task_id < 5; ++task_id) {
+            std::string output_file = output_dir
+                                      + "/" + map_name
+                                      + "_" + std::to_string(task.obstacles_number)
+                                      + "_" + std::to_string(task_id)
+                                      + ".xml";
+            std::cout << output_file << std::endl;
+
+            GenerateTask(task, output_file);
         }
     }
 }
@@ -108,24 +126,25 @@ void SetStartFinish(tinyxml2::XMLElement *map, Task& task) {
     std::uniform_int_distribution<> height_distrib(0, task.height - 1);
     std::uniform_int_distribution<> width_distrib(0, task.width - 1);
 
+    int distance;
     do {
         start_i = height_distrib(gen);
         start_j = width_distrib(gen);
-    } while (task.grid[start_i][start_j] == true);
 
-    int distance;
-    do {
         finish_i = height_distrib(gen);
         finish_j = width_distrib(gen);
 
         distance = abs(start_i - finish_i) + abs(start_j - finish_j);
-    } while (distance < std::max(task.height, task.width)
+    } while (distance < std::max(task.height, task.width) || task.grid[start_i][start_j] == true
              || task.grid[finish_i][finish_j] == true);
 
     map->InsertNewChildElement("startx")->SetText(start_j + 1);
     map->InsertNewChildElement("starty")->SetText(start_i + 1);
     map->InsertNewChildElement("finishx")->SetText(finish_j + 1);
     map->InsertNewChildElement("finishy")->SetText(finish_i + 1);
+
+    task.start_x = start_j;
+    task.start_y = start_i;
 }
 
 
@@ -154,11 +173,12 @@ bool GeneratePath(std::vector<std::vector<PathComponent>>& obstacles, Task& task
     do {
         next.x = width_distrib(gen);
         next.y = height_distrib(gen);
-    } while (task.grid[next.y][next.x] || (!task.mightIntersect && PathsIntersect({next, next}, obstacles)));
+    } while (task.grid[next.y][next.x] || (next.x == task.start_x && next.y == task.start_y)
+             || (!task.mightIntersect && PathsIntersect({next, next}, obstacles)));
 
     obstacle.push_back(next);
 
-    while (next.time < task.width + task.height) {
+    while (next.time < (task.width + task.height) || PathsIntersect({next, {next.x, next.y, INF}}, obstacles)) {
         PathComponent& current = obstacle.back();
 
         int min_dy = 0, max_dy = 0, min_dx = 0, max_dx = 0;
@@ -190,29 +210,31 @@ bool GeneratePath(std::vector<std::vector<PathComponent>>& obstacles, Task& task
             }
 
             if (next.x == current.x && next.y == current.y) {
-                next.time = current.time + width_distrib(gen) % 10;
+                next.time = current.time + width_distrib(gen) % 10 + 1;
             } else {
                 next.time = current.time + abs(next.x - current.x) + abs(next.y - current.y);
             }
 
             auto endTime = std::chrono::system_clock::now();
             time = std::chrono::duration<double>(endTime - startTime).count();
-        } while (time < 3 && (task.grid[next.y][next.x]
+        } while (time < 1 && (task.grid[next.y][next.x]
                               || (!task.mightIntersect && PathsIntersect({current, next}, obstacles))));
 
-        if (time >= 3) {
+        if (time >= 1) {
             return false;
         }
 
         obstacle.push_back(next);
     }
 
+    obstacle.push_back({next.x, next.y, INF});
+
     obstacles.push_back(obstacle);
     return true;
 }
 
 void SetDynamicObstacles(tinyxml2::XMLElement *obstacles, Task& task) {
-    std::cout << "setting dynamic obstacles... " << std::endl;
+    std::cout << "setting dynamic obstacles..." << std::endl;
     std::vector<std::vector<PathComponent>> obstaclePaths;
 
     for (int i = 0; i < task.obstacles_number; ++i) {
@@ -230,8 +252,8 @@ void SetDynamicObstacles(tinyxml2::XMLElement *obstacles, Task& task) {
         for (const auto& [x, y, time] : obstaclePaths[i]) {
             tinyxml2::XMLElement *point = obstacle->InsertNewChildElement("point");
 
-            point->SetAttribute("x", x);
-            point->SetAttribute("y", y);
+            point->SetAttribute("x", x + 1);
+            point->SetAttribute("y", y + 1);
             point->SetAttribute("time", time);
         }
     }

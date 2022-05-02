@@ -180,7 +180,11 @@ void Sipp::generatePath(Node* goal, const Map& map) {
 
     auto it1 = lppath.begin(), it3 = it1++, it2 = it1++;
     hppath.push_back(*it3);
-    uint32_t startG = it3->g; 
+    if (it2->g - it3->g > 1) { // 1 = cost
+        hppath.push_back(*it3);
+        hppath.back().g = it2->g - 1;
+    }
+    uint32_t startG = hppath.back().g; 
     while (it1 != lppath.end()) {
         if ((it2->j - it3->j) * (it1->i - it3->i) - (it1->j - it3->j) * (it2->i - it3->i) != 0
                 || distance(&(*it3), &(*it1)) < it1->g - startG) {

@@ -4,5 +4,7 @@ project(${PROJECT_NAME})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a -O2 -Wall -Wextra -fsanitize=address")
 
+enable_testing()
+
 add_subdirectory(Src/PathPlanning)
 add_subdirectory(Tests)
