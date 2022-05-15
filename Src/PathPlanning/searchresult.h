@@ -10,6 +10,8 @@ struct SearchResult {
     unsigned int            nodescreated;
     unsigned int            numberofsteps;
     double                  searchtime;
+    double                  suboptimalityBound;
+    unsigned int            numberofsearches;
 
     SearchResult() {
         pathfound = false;
@@ -19,5 +21,7 @@ struct SearchResult {
         nodescreated = 0;
         numberofsteps = 0;
         searchtime = 0;
+        suboptimalityBound = 1;
+        numberofsearches = 0;
     }
 };

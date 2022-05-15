@@ -2,6 +2,7 @@
 #include <iostream>
 
 EnvironmentOptions::EnvironmentOptions() {
+    anytime = false;
     hweight = 1.0;
     allowdiagonal = false;
     cutcorners = false;

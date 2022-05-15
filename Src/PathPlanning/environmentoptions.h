@@ -4,6 +4,7 @@
 class EnvironmentOptions {
 public:
     // int         metrictype;
+    bool        anytime;
     double      hweight;
     bool        allowsqueeze;
     bool        allowdiagonal;

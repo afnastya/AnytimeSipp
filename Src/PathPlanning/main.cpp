@@ -2,9 +2,12 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <boost/program_options.hpp>
 #include "mission.h"
 
-void ProcessTask(const char *filename, int logLevel = -1);
+namespace po = boost::program_options;
+
+void ProcessTask(const char *filename, int logLevel, std::optional<double> hweight);
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -12,29 +15,40 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    std::optional<int> logLevel;
-    try {
-        if (argc > 2) {
-            logLevel = std::stoi(argv[2]);
-        }
-    } catch (...) {
-    }
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("logLevel,l", po::value<int>(), "log level")
+        ("hweight,w", po::value<double>(), "initial hweight for anytime sipp")
+    ;
+
+    po::variables_map vm;
+    po::parsed_options parser = po::command_line_parser(argc, argv).options(desc).allow_unregistered().run();
+    po::store(parser, vm);
+    po::notify(vm);
 
     std::filesystem::path tasks_path(argv[1]);
     if (!std::filesystem::is_directory(tasks_path)) {
-        ProcessTask(tasks_path.c_str(), logLevel ? logLevel.value() : 2);
+        ProcessTask(
+            tasks_path.c_str(),
+            vm.count("logLevel") ? vm["logLevel"].as<int>() : 2,
+            vm.count("hweight") ? std::optional(vm["hweight"].as<double>()) : std::nullopt
+        );
         return 0;
     }
 
     for (const auto& dir_entry : std::filesystem::directory_iterator{tasks_path}) {
         const char *filename = dir_entry.path().c_str();
 
-        ProcessTask(filename, logLevel ? logLevel.value() : 0);
+        ProcessTask(
+            filename,
+            vm.count("logLevel") ? vm["logLevel"].as<int>() : 0,
+            vm.count("hweight") ? std::optional(vm["hweight"].as<double>()) : std::nullopt
+        );
     }
 }
 
 
-void ProcessTask(const char *filename, int logLevel) {
+void ProcessTask(const char *filename, int logLevel, std::optional<double> hweight) {
     Mission mission(filename, logLevel);
 
     if (logLevel > 1) {
@@ -47,6 +61,10 @@ void ProcessTask(const char *filename, int logLevel) {
 
     if (logLevel > 1) {
         std::cout << "Parsing is completed\n";
+    }
+
+    if (hweight) {
+        mission.SetOptions(hweight.value());
     }
 
     mission.RunTask();

@@ -1,22 +1,14 @@
-#include "search.h"
+#include "sipp.h"
 #include <cmath>
 
-auto NodeCompare = [](const Node* lhs, const Node* rhs) {
-    return std::tie(lhs->F, lhs->g, lhs->interval, lhs->i, lhs->j) < std::tie(rhs->F, rhs->g, rhs->interval, rhs->i, rhs->j);
-};
-
-
-Sipp::Sipp(int _logLevel) : OPEN(NodeCompare), logLevel(_logLevel) {
+Sipp::Sipp(int _logLevel) : OPEN(CreateNodeCompare()), logLevel(_logLevel) {
+    currentResultIndex = 0;
 }
 
 Sipp::~Sipp() {
     for (auto it = cells2nodes.begin(); it != cells2nodes.end(); ++it) {
         delete it->second;
     }
-}
-
-long long hash(int i, int j, int k) {
-    return ((i * 10000) + j) * 10000 + k;
 }
 
 SearchResult Sipp::startSearch(Map& map, const EnvironmentOptions& options) {
@@ -26,18 +18,17 @@ SearchResult Sipp::startSearch(Map& map, const EnvironmentOptions& options) {
     map.setIntervals(start.first, start.second);
     // map.printIntervals(start.first, start.second);
 
-    cells2nodes[hash(start.first, start.second, 0)] = new Node(
+    cells2nodes[{start.first, start.second, 0}] = new Node(
         start.first,
         start.second,
         0,
         0,
         getHeuristic(start.first, start.second, map),
-        options.hweight,
         nullptr
     );
 
     if (map(start.first, start.second, 0).startTime == 0) {
-        OPEN.insert(cells2nodes[hash(start.first, start.second, 0)]);
+        OPEN.insert(cells2nodes[{start.first, start.second, 0}]);
     }
 
     while (!OPEN.empty()) {
@@ -84,6 +75,9 @@ SearchResult Sipp::startSearch(Map& map, const EnvironmentOptions& options) {
     return sresult;
 }
 
+const SearchResult* Sipp::getResults() {
+    return currentResultIndex++ == 0 ? &sresult : nullptr;
+}
 
 std::vector<std::pair<Node*, int>> Sipp::getSuccessors(Node* node, Map& map, const EnvironmentOptions& options) {
     std::vector<std::pair<Node*, int>> successors;
@@ -119,7 +113,7 @@ std::vector<std::pair<Node*, int>> Sipp::getSuccessors(Node* node, Map& map, con
                 uint32_t interval = map.getSafeIntervalId(i, j, minTime);
 
                 for (; interval < map(i, j).size() && map(i, j, interval).startTime < maxTime; ++interval) {
-                    Node* successor = cells2nodes[hash(i, j, interval)];
+                    Node* successor = cells2nodes[std::tie(i, j, interval)];
                     int new_g = std::max(
                         node->g + cost,
                         map(i, j, interval).startTime + cost / 2
@@ -132,10 +126,9 @@ std::vector<std::pair<Node*, int>> Sipp::getSuccessors(Node* node, Map& map, con
                             interval,
                             new_g,
                             getHeuristic(i, j, map),
-                            options.hweight,
                             node
                         );
-                        cells2nodes[hash(i, j, interval)] = successor;
+                        cells2nodes[std::tie(i, j, interval)] = successor;
                         OPEN.insert(successor);
                     }
                     successors.push_back({successor, new_g});
@@ -157,7 +150,7 @@ bool Sipp::checkDiagonalSuccessor(Node* node, int i, int j, const Map& map, cons
            (options.allowsqueeze && !nearCell1 && !nearCell2);
 }
 
-uint32_t distance(Node* start, Node* finish) {
+static uint32_t distance(Node* start, Node* finish) {
     return abs(finish->i - start->i) + abs(finish->j - start->j);
 }
 
@@ -205,11 +198,6 @@ void Sipp::generatePath(Node* goal, const Map& map) {
         ++it1;
     }
 
-    // int dist = distance(&hppath.back(), &lppath.back());
-    // if (lppath.back().g > hppath.back().g + dist) {
-    //     hppath.push_back(hppath.back());
-    //     hppath.back().g = lppath.back().g - dist;
-    // }
     hppath.push_back(lppath.back());
 }
 
@@ -218,7 +206,7 @@ void Sipp::setSearchResult(bool pathFound) {
     sresult.pathlength = pathFound ? lppath.back().g : 0;
     sresult.lppath = &lppath;
     sresult.hppath = &hppath;
-    sresult.nodescreated = OPEN.size() + CLOSE.size();
+    sresult.nodescreated = cells2nodes.size();
 }
 
 double Sipp::getHeuristic(int i, int j, const Map& map) {
