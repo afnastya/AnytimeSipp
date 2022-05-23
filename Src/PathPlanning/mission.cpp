@@ -111,11 +111,13 @@ void Mission::SaveResultToOutputDocument() {
 
 void Mission::SavePathToOutputDocument(tinyxml2::XMLElement *log, const SearchResult& sresult) {
     tinyxml2::XMLElement *path = log->InsertNewChildElement("path");
-    path->SetAttribute("suboptimalitybound", sresult.suboptimalityBound);
-    path->SetAttribute("pathlength", sresult.pathlength);
-    path->SetAttribute("nodescreated", sresult.nodescreated);
-    path->SetAttribute("numberofsteps", sresult.numberofsteps);
-    path->SetAttribute("searchtime", sresult.searchtime);
+    if (options.anytime) {
+        path->SetAttribute("suboptimalitybound", sresult.suboptimalityBound);
+        path->SetAttribute("pathlength", sresult.pathlength);
+        path->SetAttribute("nodescreated", sresult.nodescreated);
+        path->SetAttribute("numberofsteps", sresult.numberofsteps);
+        path->SetAttribute("searchtime", sresult.searchtime);
+    }
 
     for (auto& node : *sresult.hppath) {
         auto *point = path->InsertNewChildElement("point");
@@ -159,6 +161,16 @@ void Mission::WriteTestResult() {
         if (!searchResults.empty()) {
             std::cout << "," << searchResults[0]->searchtime;
         }
+
+        for (int i = 0; i <= 10; ++i) {
+            for (auto& result : searchResults) {
+                if (result->suboptimalityBound <= (options.hweight - 1) * (10 - i) / 10 + 1) {
+                    std::cout << "," << result->searchtime;
+                    break;
+                }
+            }
+        }
     }
     std::cout << "\n";
+    std::cout.flush();
 }

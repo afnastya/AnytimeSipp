@@ -60,6 +60,97 @@ class Map:
             return (prev_point + k * (point - prev_point))[:2]
 
 
+def create_animation(map, zoom_eps=None):
+    fig, ax = plt.subplots(figsize=(5, 5))
+    plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'
+    cmap = mcolors.ListedColormap(['white', 'black'])
+    ax.imshow(map.grid, cmap)
+
+    # Grid lines
+    ticks_deltas = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+    ax.tick_params(which='major', top=True, bottom=False, labeltop=True, labelbottom=False)
+    ax.tick_params(which='minor', top=False, bottom=False, left=False, right=False)
+    x_index = bisect_left(ticks_deltas, (2 * zoom_eps[0] if zoom_eps else map.width) / 10)
+    y_index = bisect_left(ticks_deltas, (2 * zoom_eps[1] if zoom_eps else map.height) / 10)
+    ax.set_xticks(np.arange(0, map.width, ticks_deltas[x_index]))
+    ax.set_yticks(np.arange(0, map.height, ticks_deltas[y_index]))
+    ax.set_xticks(np.arange(-0.5, map.width, ticks_deltas[x_index - 1 + (x_index == 0)]), minor=True)
+    ax.set_yticks(np.arange(-0.5, map.height, ticks_deltas[y_index - 1 + (y_index == 0)]), minor=True)
+    ax.grid(which='minor', color='black', linewidth=0.5, linestyle='--')
+
+    # Start positions of obstacles and agent
+    start_x = [map.obstacles[i][0][0] for i in range(len(map.obstacles))]
+    start_y = [map.obstacles[i][0][1] for i in range(len(map.obstacles))]
+    if max(map.width, map.height) < 50:
+        points, = ax.plot(start_x, start_y, marker="o", ls='')
+        agent, = ax.plot(map.start[0], map.start[1], marker="o", color='red', ls=':')
+    else:
+        points, = ax.plot(start_x, start_y, marker="o", ls='', ms=200/max(map.width, map.height))
+        agent, = ax.plot(map.start[0], map.start[1], marker="o", color='red', ls=':', ms=200/max(map.width, map.height))
+    ax.plot(map.start[0], map.start[1], marker="$S$", color='red')
+    ax.plot(map.finish[0], map.finish[1], marker="$F$", color='red')
+
+    if zoom_eps is not None:
+        ax.set_xlim(map.start[0] - zoom_eps[0], map.start[0] + zoom_eps[0])
+        ax.set_ylim(map.start[1] + zoom_eps[1], map.start[1] - zoom_eps[1])
+
+    # Update positions of obstacles and agents
+    def update(time):
+        x, y = [0] * len(map.obstacles), [0] * len(map.obstacles)
+        for i in range(len(map.obstacles)):
+            x[i], y[i] = map.getPosition(map.obstacles[i], time)
+        points.set_data((x, y))
+
+        x, y = map.getPosition(map.path, time)
+        agent.set_data((x, y))
+
+        if zoom_eps is not None:
+            ax.set_xlim(x - zoom_eps[0], x + zoom_eps[0])
+            ax.set_ylim(y + zoom_eps[1], y - zoom_eps[1])
+        return points, agent, 
+        
+    anim = animation.FuncAnimation(fig, update, interval=5, blit=True, repeat=False,
+                                frames=np.linspace(0, map.path_time + 2, 800 * (map.path_time // 300 + 1)))
+
+    print("Animation is created, ready to save")
+    return anim
+
+
+def get_zoom():
+    default_values = [10, 10]
+    if "-zoom" not in sys.argv:
+        return None
+    
+    index = sys.argv.index("-zoom")
+    if index + 1 >= len(sys.argv):
+        return default_values
+    elif index + 2 >= len(sys.argv):
+        values = [sys.argv[index + 1], sys.argv[index + 1]]
+    else:
+        values = [sys.argv[index + 1], sys.argv[index + 2]]
+
+    for i in range(2):
+        try:
+            values[i] = int(values[i])
+            if values[i] <= 0:
+                values[i] = default_values[i]
+        except:
+            values[i] = default_values[i]
+    return values
+
+
+def get_outputfile():
+    if "-o" not in sys.argv:
+        return None
+    
+    index = sys.argv.index("-o")
+    if index + 1 >= len(sys.argv):
+        return None
+    
+    return sys.argv[index + 1]
+
+
+
 
 if len(sys.argv) < 2:
     print("Error: input file is not specified")
@@ -68,50 +159,18 @@ if len(sys.argv) < 2:
 input_file = sys.argv[1]
 map = Map(input_file)
 
-"""
-Creation of animation
-"""
-fig, ax = plt.subplots(figsize=(8, 4))
-plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'
-cmap = mcolors.ListedColormap(['white', 'black'])
-ax.imshow(map.grid, cmap)
+output_file = get_outputfile()
+if output_file is None:
+    output_file = input_file[:-4] + ".mp4"
 
-# Grid lines
-ticks_deltas = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
-ax.tick_params('both', top=True, bottom=False, labeltop=True, labelbottom=False)
-x_index = bisect_left(ticks_deltas, map.width / 10)
-y_index = bisect_left(ticks_deltas, map.height / 10)
-ax.set_xticks(np.arange(0, map.width, ticks_deltas[x_index]))
-ax.set_yticks(np.arange(0, map.height, ticks_deltas[y_index]))
-ax.set_xticks(np.arange(-0.5, map.width, ticks_deltas[x_index - 1 + (x_index == 0)]), minor=True)
-ax.set_yticks(np.arange(-0.5, map.height, ticks_deltas[y_index - 1 + (y_index == 0)]), minor=True)
-ax.grid(which='minor', color='black', linewidth=0.5, linestyle='--')
-
-# Start positions of obstacles and agent
-start_x = [map.obstacles[i][0][0] for i in range(len(map.obstacles))]
-start_y = [map.obstacles[i][0][1] for i in range(len(map.obstacles))]
-points, = ax.plot(start_x, start_y, marker="o", ls='') # ms=100/max(map.width, map.height))
-agent, = ax.plot(map.start[0], map.start[1], marker="o", color='red', ls=':') # ms=100/max(map.width, map.height))
-ax.plot(map.start[0], map.start[1], marker="$S$", color='red')
-ax.plot(map.finish[0], map.finish[1], marker="$F$", color='red')
-
-# Update positions of obstacles and agents
-def update(time):
-    x, y = [0] * len(map.obstacles), [0] * len(map.obstacles)
-    for i in range(len(map.obstacles)):
-        x[i], y[i] = map.getPosition(map.obstacles[i], time)
-    points.set_data((x, y))
-
-    agent.set_data(map.getPosition(map.path, time))
-    return points, agent, 
-    
-anim = animation.FuncAnimation(fig, update, interval=5, blit=True, repeat=True,
-                               frames=np.linspace(0, map.path_time + 2, 400))
-
-print("Animation is created, ready to save")
+zoom_eps = get_zoom()
 
 # plt.show()
 
-writermp4 = animation.writers['ffmpeg'](fps=60)
-slash_index = input_file.rfind('/')
-anim.save(input_file[:slash_index] + '/../videos' + input_file[slash_index:-4] + '.mp4', writermp4)
+writermp4 = animation.writers['ffmpeg'](fps=50, bitrate=4000)
+anim = create_animation(map, zoom_eps)
+
+try:
+    anim.save(output_file, writermp4, dpi=400)
+except:
+    pass

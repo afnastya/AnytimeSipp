@@ -46,13 +46,17 @@ SearchResult Anytime::startSearch(Map& map, const EnvironmentOptions& options) {
     setSearchResult(pathFound, map);
 
     while (pathFound && suboptimalityBound > 1) {
-        hweight = std::max(1.0, hweight * 0.8);
+        hweight = std::max(1.0, hweight - options.hweight * 0.05);
         regenerateOPEN();
         CLOSE.clear();
-        sresults.emplace_back();
+        if (sresults.back().numberofsteps > 0) {
+            sresults.emplace_back();
+        }
 
         pathFound = improvePath(map);
-        setSearchResult(pathFound, map);
+        if (sresults.back().numberofsteps > 0) {
+            setSearchResult(pathFound, map);
+        }
     }
 
     SearchResult sresult = sresults.back();

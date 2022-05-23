@@ -7,15 +7,16 @@
 
 struct Path {
     std::vector<PathComponent> path;
-    double bound;
-    int pathlength;
+    double bound = 0;
+    int pathlength = 0;
 };
 
 struct Data {
     int width, height;
     int start_i, start_j;
     int goal_i, goal_j;
-    int pathlength;
+    int pathlength = 0;
+    bool anytime = false;
     std::vector<std::vector<int>> map;
     std::vector<std::vector<PathComponent>> obstacles;
     std::vector<Path> paths;
@@ -43,13 +44,15 @@ bool Check(const char* filename, std::stringstream& error) {
         auto& path = path_structure.path;
 
         // check suboptimality bound correctness
-        if (path_structure.pathlength > ceill(path_structure.bound * data.pathlength)) {
-            error << "suboptimality bound is not correct: " << path_structure.pathlength << " > "
-                  << path_structure.bound << " * " << data.pathlength;
-            return false;
+        if (data.anytime) {
+            if (path_structure.pathlength > ceill(path_structure.bound * data.pathlength)) {
+                error << "suboptimality bound is not correct: " << path_structure.pathlength << " > "
+                    << path_structure.bound << " * " << data.pathlength;
+                return false;
+            }
         }
 
-        if (path_structure.pathlength != path_structure.path.back().time) {
+        if (data.anytime && path_structure.pathlength != path.back().time) {
             error << "value of pathlength differs from goal point time";
             return false;
         }
@@ -83,6 +86,11 @@ bool Check(const char* filename, std::stringstream& error) {
                 return false;
             }
         }
+    }
+
+    if (data.pathlength != data.paths.back().path.back().time) {
+        error << "value of pathlength differs from goal point time";
+        return false;
     }
 
     return true;
@@ -166,6 +174,10 @@ void ParseData(const char* filename, Data& data) {
 
     element = doc.FirstChildElement("root")->FirstChildElement("log");
     element->FirstChildElement("summary")->QueryIntAttribute("pathlength", &data.pathlength);
+    if (element->FirstChildElement("summary")->FindAttribute("numberofsearches")) {
+        data.anytime = true;
+    }
+
     
     element = element->FirstChildElement("path");
     for (; element != nullptr; element = element->NextSiblingElement()) {

@@ -94,7 +94,7 @@ public:
                && std::min(C.y, D.y) <= std::max(A.y, B.y);
     }
 
-    friend std::variant<Intersection, Vector<int>> GetIntersection(Vector A, Vector B, Vector C, Vector D) {
+    friend std::variant<Intersection, Vector> GetIntersection(Vector A, Vector B, Vector C, Vector D) {
         if ((A == B && PointOnSegment(A, C, D)) || (C == D && PointOnSegment(C, A, B))) {
             return Intersection::POINT;
         }

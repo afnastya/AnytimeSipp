@@ -29,8 +29,8 @@ int GetTime(int x, int y, const PathComponent& p1) {        // no diagonal steps
 }
 
 bool PathsIntersect(const PathSegment& p1, const PathSegment& p2) {
-    Vector<int> p1_xy1(p1.start.x, p1.start.y), p1_xy2(p1.end.x, p1.end.y);
-    Vector<int> p2_xy1(p2.start.x, p2.start.y), p2_xy2(p2.end.x, p2.end.y);
+    Vector<long long> p1_xy1(p1.start.x, p1.start.y), p1_xy2(p1.end.x, p1.end.y);
+    Vector<long long> p2_xy1(p2.start.x, p2.start.y), p2_xy2(p2.end.x, p2.end.y);
 
     auto I = GetIntersection(p1_xy1, p1_xy2, p2_xy1, p2_xy2);
 
@@ -39,11 +39,11 @@ bool PathsIntersect(const PathSegment& p1, const PathSegment& p2) {
             return false;
         }
 
-        int dx = abs(p1.end.x - p1.start.x) + abs(p2.end.x - p2.start.x);
-        Vector<int> p1_time1(dx == 0 ? p1.start.y : p1.start.x, p1.start.time);
-        Vector<int> p1_time2(dx == 0 ? p1.end.y : p1.end.x, p1.end.time);
-        Vector<int> p2_time1(dx == 0 ? p2.start.y : p2.start.x, p2.start.time);
-        Vector<int> p2_time2(dx == 0 ? p2.end.y : p2.end.x, p2.end.time);
+        long long dx = abs(p1.end.x - p1.start.x) + abs(p2.end.x - p2.start.x);
+        Vector<long long> p1_time1(dx == 0 ? p1.start.y : p1.start.x, p1.start.time);
+        Vector<long long> p1_time2(dx == 0 ? p1.end.y : p1.end.x, p1.end.time);
+        Vector<long long> p2_time1(dx == 0 ? p2.start.y : p2.start.x, p2.start.time);
+        Vector<long long> p2_time2(dx == 0 ? p2.end.y : p2.end.x, p2.end.time);
 
         I = GetIntersection(p1_time1, p1_time2, p2_time1, p2_time2);
 
@@ -51,7 +51,7 @@ bool PathsIntersect(const PathSegment& p1, const PathSegment& p2) {
             return true;
         }
     } else {
-        Vector<int> P = std::get<Vector<int>>(I);
+        Vector<long long> P = std::get<Vector<long long>>(I);
         int time1 = GetTime(P.x, P.y, p1.start);
         int time2 = GetTime(P.x, P.y, p2.start);
 

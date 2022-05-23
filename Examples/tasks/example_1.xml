@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <map>
+        <width>20</width>
+        <height>10</height>
+        <startx>7</startx>
+        <starty>5</starty>
+        <finishx>19</finishx>
+        <finishy>8</finishy>
+        <grid>
+            <row>0 1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1</row>
+            <row>0 1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1</row>
+            <row>0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
+            <row>0 1 1 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0</row>
+            <row>0 1 1 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0</row>
+            <row>0 1 1 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0</row>
+            <row>0 0 0 0 0 0 0 0 0 1 1 0 0 1 1 0 0 0 0 0</row>
+            <row>0 0 0 0 0 0 1 1 1 0 0 0 0 1 1 0 0 0 0 0</row>
+            <row>0 0 0 0 0 0 1 0 1 0 0 0 0 1 1 0 0 0 0 0</row>
+            <row>0 0 0 0 0 0 1 1 1 0 0 0 0 1 1 0 0 0 0 0</row>
+        </grid>
+        <dynamicobstacles>
+            <obstacle id="1">
+                <point x="1" y="2" time="0"/>
+                <point x="1" y="7" time="5"/>
+                <point x="5" y="7" time="9"/>
+                <point x="5" y="1" time="15"/>
+            </obstacle>
+            <obstacle id="2">
+                <point x="20" y="3" time="0"/>
+                <point x="12" y="3" time="8"/>
+                <point x="12" y="8" time="13"/>
+            </obstacle>
+            <obstacle id="3">
+                <point x="4" y="3" time="0"/>
+                <point x="9" y="3" time="5"/>
+                <point x="9" y="1" time="7"/>
+            </obstacle>
+        </dynamicobstacles>
+    </map>
+</root>

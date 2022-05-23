@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <map>
+        <width>4</width>
+        <height>3</height>
+        <startx>1</startx>
+        <starty>3</starty>
+        <finishx>4</finishx>
+        <finishy>1</finishy>
+        <grid>
+            <row>0 1 1 0</row>
+            <row>0 0 0 0</row>
+            <row>0 1 1 0</row>
+        </grid>
+        <dynamicobstacles>
+            <obstacle id="1">
+                <point x="4" y="3" time="0"/>
+                <point x="4" y="2" time="1"/>
+                <point x="1" y="2" time="4"/>
+                <point x="1" y="1" time="5"/>
+            </obstacle>
+        </dynamicobstacles>
+    </map>
+    <log>
+        <summary pathlength="9" numberofsteps="13" nodescreated="16" numberofsearches="3" searchtime="0.000105"/>
+        <path suboptimalitybound="1.2857142857142858" pathlength="9" nodescreated="14" numberofsteps="9" searchtime="5.5000000000000002e-05">
+            <point x="1" y="3" time="0"/>
+            <point x="1" y="3" time="4"/>
+            <point x="1" y="2" time="5"/>
+            <point x="4" y="2" time="8"/>
+            <point x="4" y="1" time="9"/>
+        </path>
+        <path suboptimalitybound="1.2857142857142858" pathlength="9" nodescreated="16" numberofsteps="3" searchtime="0.0001">
+            <point x="1" y="3" time="0"/>
+            <point x="1" y="3" time="4"/>
+            <point x="1" y="2" time="5"/>
+            <point x="4" y="2" time="8"/>
+            <point x="4" y="1" time="9"/>
+        </path>
+        <path suboptimalitybound="1" pathlength="9" nodescreated="16" numberofsteps="1" searchtime="0.000105">
+            <point x="1" y="3" time="0"/>
+            <point x="1" y="3" time="4"/>
+            <point x="1" y="2" time="5"/>
+            <point x="4" y="2" time="8"/>
+            <point x="4" y="1" time="9"/>
+        </path>
+    </log>
+</root>

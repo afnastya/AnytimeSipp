@@ -132,7 +132,7 @@ void Map::setIntervals(int i, int j) {
                 path[point_i - 1].time + getDistance(i, j, path[point_i - 1].y, path[point_i - 1].x) + cost / 2
             );
 
-            if (getDistance(i, j, path[point_i - 1].y, path[point_i - 1].x) == 0) {
+            if (getDistance(path[point_i - 1].y, path[point_i - 1].x, path[point_i].y, path[point_i].x) == 0) {
                 collision_intervals.back().endTime = path[point_i].time + cost / 2;
             }
         }

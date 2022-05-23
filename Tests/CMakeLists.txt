@@ -9,8 +9,16 @@ set(SOURCES         ../Src/PathPlanning/tinyxml2.cpp)
 add_executable(Generate ${HEADERS} ${SOURCES} generator.cpp)
 add_executable(Check ${HEADERS} ${SOURCES} check.cpp)
 
+add_test(NAME "examples"
+         COMMAND bash -c "./../Src/PathPlanning/SippSearch ../../Examples/tasks/ &&
+         ./Check ../../Examples/logs")
+
+add_test(NAME "examples/anytime"
+         COMMAND bash -c "./../Src/PathPlanning/SippSearch ../../Examples/tasks/ -w 10 &&
+         ./Check ../../Examples/logs_anytime")
+
 add_test(NAME "preparation/run"
-         COMMAND bash -c "echo \"taskfile,width,height,obstaclesN,hweight,found,length,nodescreated,numberofsteps,searchtime\" >../../Tests/results.csv")
+         COMMAND bash -c "echo \"taskfile,width,height,obstaclesN,found,length,nodescreated,numberofsteps,searchtime\" >../../Tests/results.csv")
 
 add_test(NAME "256/small_tasks/run"
          COMMAND bash -c "./../Src/PathPlanning/SippSearch ../../TestsData/City/tests_256/small_tasks/tasks/ -l -2 >>../../Tests/results.csv &&

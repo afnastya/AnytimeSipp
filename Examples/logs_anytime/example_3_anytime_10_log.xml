@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <map>
+        <width>10</width>
+        <height>5</height>
+        <startx>2</startx>
+        <starty>3</starty>
+        <finishx>10</finishx>
+        <finishy>3</finishy>
+        <grid>
+            <row>1 1 0 1 1 1 0 1 1 1</row>
+            <row>1 1 0 1 1 1 0 1 1 1</row>
+            <row>0 0 0 0 0 0 0 0 0 0</row>
+            <row>1 1 0 1 1 1 0 1 1 1</row>
+            <row>1 1 0 1 1 1 0 1 1 1</row>
+        </grid>
+        <dynamicobstacles>
+            <obstacle id="1">
+                <point x="10" y="3" time="0"/>
+                <point x="1" y="3" time="9"/>
+                <point x="3" y="3" time="11"/>
+                <point x="3" y="5" time="13"/>
+                <point x="3" y="1" time="17"/>
+                <point x="3" y="5" time="21"/>
+            </obstacle>
+        </dynamicobstacles>
+    </map>
+    <log>
+        <summary pathlength="15" numberofsteps="23" nodescreated="34" numberofsearches="3" searchtime="0.00028899999999999998"/>
+        <path suboptimalitybound="1.5" pathlength="15" nodescreated="29" numberofsteps="15" searchtime="0.00014300000000000001">
+            <point x="2" y="3" time="0"/>
+            <point x="3" y="3" time="1"/>
+            <point x="3" y="2" time="2"/>
+            <point x="3" y="2" time="7"/>
+            <point x="3" y="3" time="8"/>
+            <point x="10" y="3" time="15"/>
+        </path>
+        <path suboptimalitybound="1.25" pathlength="15" nodescreated="30" numberofsteps="3" searchtime="0.00026600000000000001">
+            <point x="2" y="3" time="0"/>
+            <point x="3" y="3" time="1"/>
+            <point x="3" y="2" time="2"/>
+            <point x="3" y="2" time="7"/>
+            <point x="3" y="3" time="8"/>
+            <point x="10" y="3" time="15"/>
+        </path>
+        <path suboptimalitybound="1" pathlength="15" nodescreated="34" numberofsteps="5" searchtime="0.00028899999999999998">
+            <point x="2" y="3" time="0"/>
+            <point x="3" y="3" time="1"/>
+            <point x="3" y="2" time="2"/>
+            <point x="3" y="2" time="7"/>
+            <point x="3" y="3" time="8"/>
+            <point x="10" y="3" time="15"/>
+        </path>
+    </log>
+</root>

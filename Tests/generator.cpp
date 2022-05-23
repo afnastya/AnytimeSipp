@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
 
     if (!std::filesystem::is_directory(maps_path)) {
         ProcessMap(maps_path, obstacles_numbers, argv[2]);
+        return 0;
     }
 
     for (const auto& dir_entry : std::filesystem::directory_iterator{maps_path}) {
@@ -101,7 +102,7 @@ void ParseMap(const std::string& input_file, Task& task) {
 
     std::string unused_line;
     std::getline(input, unused_line);
-    input >> unused_line >> task.width >> unused_line >> task.height >> unused_line;
+    input >> unused_line >> task.height >> unused_line >> task.width >> unused_line;
     std::getline(input, unused_line);
 
     task.grid.resize(task.height, std::vector<bool>(task.width));
@@ -135,7 +136,7 @@ void SetStartFinish(tinyxml2::XMLElement *map, Task& task) {
         finish_j = width_distrib(gen);
 
         distance = abs(start_i - finish_i) + abs(start_j - finish_j);
-    } while (distance < std::max(task.height, task.width) || task.grid[start_i][start_j] == true
+    } while (distance < std::max(task.height, task.width) / 2 || task.grid[start_i][start_j] == true
              || task.grid[finish_i][finish_j] == true);
 
     map->InsertNewChildElement("startx")->SetText(start_j + 1);

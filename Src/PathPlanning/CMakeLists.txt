@@ -19,6 +19,3 @@ set(SOURCES         anytime.cpp
 
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} main.cpp)
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
-
-add_executable(tmp test.cpp)
-target_link_libraries(tmp ${Boost_LIBRARIES})
