@@ -28,22 +28,31 @@ int main(int argc, char **argv) {
 
     std::filesystem::path tasks_path(argv[1]);
     if (!std::filesystem::is_directory(tasks_path)) {
-        ProcessTask(
-            tasks_path.c_str(),
-            vm.count("logLevel") ? vm["logLevel"].as<int>() : 2,
-            vm.count("hweight") ? std::optional(vm["hweight"].as<double>()) : std::nullopt
-        );
+        try {
+            ProcessTask(
+                tasks_path.c_str(),
+                vm.count("logLevel") ? vm["logLevel"].as<int>() : 2,
+                vm.count("hweight") ? std::optional(vm["hweight"].as<double>()) : std::nullopt
+            );
+        } catch (const std::exception& e) {
+            std::cout << e.what() << std::endl;
+        }
+
         return 0;
     }
 
     for (const auto& dir_entry : std::filesystem::directory_iterator{tasks_path}) {
         const char *filename = dir_entry.path().c_str();
 
-        ProcessTask(
-            filename,
-            vm.count("logLevel") ? vm["logLevel"].as<int>() : 0,
-            vm.count("hweight") ? std::optional(vm["hweight"].as<double>()) : std::nullopt
-        );
+        try {
+            ProcessTask(
+                filename,
+                vm.count("logLevel") ? vm["logLevel"].as<int>() : 0,
+                vm.count("hweight") ? std::optional(vm["hweight"].as<double>()) : std::nullopt
+            );
+        } catch (const std::exception& e) {
+            std::cout << e.what() << std::endl;
+        }
     }
 }
 
@@ -55,18 +64,13 @@ void ProcessTask(const char *filename, int logLevel, std::optional<double> hweig
         std::cout << "Parsing input file\n";
     }
 
-    if (!mission.ParseTask()) {
-        return;
-    }
+    mission.ParseTask();
 
     if (logLevel > 1) {
         std::cout << "Parsing is completed\n";
     }
 
-    if (hweight) {
-        mission.SetOptions(hweight.value());
-    }
-
+    mission.SetOptions(hweight);
     mission.RunTask();
 
     if (logLevel > 0) {

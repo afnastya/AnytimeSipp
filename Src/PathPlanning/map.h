@@ -35,7 +35,7 @@ public:
     Map();
     // ~Map();
 
-    bool getMap(tinyxml2::XMLElement* map);
+    void getMap(tinyxml2::XMLElement* map);
 
     int getWidth() const;
     int getHeight() const;

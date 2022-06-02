@@ -12,5 +12,5 @@ public:
     // int         searchtype;
 
     EnvironmentOptions();
-    bool getOptions(tinyxml2::XMLElement *options);
+    void getOptions(tinyxml2::XMLElement *options);
 };

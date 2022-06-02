@@ -5,23 +5,25 @@
 #include "sipp.h"
 #include "searchresult.h"
 #include <memory>
+#include <optional>
 #include <vector>
 
 class Mission {
 private:
-    Map                         map;
-    EnvironmentOptions          options;
-    std::shared_ptr<Search>     search;
-    SearchResult                searchResult;
-    std::vector<const SearchResult*>  searchResults;
-    tinyxml2::XMLDocument       inputDoc;
-    const char*                 fileName;
-    int                         logLevel;
+    Map                                 map;
+    EnvironmentOptions                  options;
+    std::shared_ptr<Search>             search;
+    SearchResult                        searchResult;
+    std::vector<const SearchResult*>    searchResults;
+    tinyxml2::XMLDocument               inputDoc;
+    const char*                         fileName;
+    int                                 logLevel;
 public:
     Mission(const char *taskFile, int _logLevel = 0);
     ~Mission();
-    bool ParseTask();
-    void SetOptions(double hweight, bool anytime = true);
+    void ParseTask();
+    void SetOptions(double hweight);
+    void SetOptions(const std::optional<double>& hweight);
     void CreateSearch();
     bool RunTask();
     void WriteResultToConsole();

@@ -61,7 +61,7 @@ class Map:
 
 
 def create_animation(map, zoom_eps=None):
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(7, 4))
     plt.rcParams['animation.ffmpeg_path'] = '/usr/local/bin/ffmpeg'
     cmap = mcolors.ListedColormap(['white', 'black'])
     ax.imshow(map.grid, cmap)
@@ -82,13 +82,13 @@ def create_animation(map, zoom_eps=None):
     start_x = [map.obstacles[i][0][0] for i in range(len(map.obstacles))]
     start_y = [map.obstacles[i][0][1] for i in range(len(map.obstacles))]
     if max(map.width, map.height) < 50:
-        points, = ax.plot(start_x, start_y, marker="o", ls='')
-        agent, = ax.plot(map.start[0], map.start[1], marker="o", color='red', ls=':')
+        points, = ax.plot(start_x, start_y, marker="o", ls='', label='obstacles')
+        agent, = ax.plot(map.start[0], map.start[1], marker="o", color='red', ls='', label='agent')
     else:
-        points, = ax.plot(start_x, start_y, marker="o", ls='', ms=200/max(map.width, map.height))
-        agent, = ax.plot(map.start[0], map.start[1], marker="o", color='red', ls=':', ms=200/max(map.width, map.height))
-    ax.plot(map.start[0], map.start[1], marker="$S$", color='red')
-    ax.plot(map.finish[0], map.finish[1], marker="$F$", color='red')
+        points, = ax.plot(start_x, start_y, marker="o", ls='', ms=200/max(map.width, map.height), label='obstacles')
+        agent, = ax.plot(map.start[0], map.start[1], marker="o", color='red', ls='', ms=200/max(map.width, map.height), label='agent')
+    ax.plot(map.start[0], map.start[1], marker="$S$", color='red', ls='', label='start')
+    ax.plot(map.finish[0], map.finish[1], marker="$F$", color='red', ls='', label='finish')
 
     if zoom_eps is not None:
         ax.set_xlim(map.start[0] - zoom_eps[0], map.start[0] + zoom_eps[0])
@@ -157,7 +157,11 @@ if len(sys.argv) < 2:
     sys.exit()
 
 input_file = sys.argv[1]
-map = Map(input_file)
+try:
+    map = Map(input_file)
+except:
+    print("Invalid input file.")
+    sys.exit()
 
 output_file = get_outputfile()
 if output_file is None:
@@ -168,7 +172,11 @@ zoom_eps = get_zoom()
 # plt.show()
 
 writermp4 = animation.writers['ffmpeg'](fps=50, bitrate=4000)
-anim = create_animation(map, zoom_eps)
+
+try:
+    anim = create_animation(map, zoom_eps)
+except:
+    sys.exit()
 
 try:
     anim.save(output_file, writermp4, dpi=400)

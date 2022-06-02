@@ -12,40 +12,36 @@ Mission::Mission(const char* taskFile, int _logLevel)
 Mission::~Mission() {
 }
 
-bool Mission::ParseTask() {
+void Mission::ParseTask() {
     if (inputDoc.LoadFile(fileName) != tinyxml2::XMLError::XML_SUCCESS) {
-        std::cout << "Error opening XML file!" << std::endl;
-        return false;
+        throw std::invalid_argument("Error opening XML file!");
     }
 
     tinyxml2::XMLElement *root = inputDoc.FirstChildElement("root");
     if (!root) {
-        std::cout << "ERROR: no root tag in XML input file\n";
-        return false;
+        throw std::invalid_argument("ERROR: no root tag in XML input file\n");
     }
 
     tinyxml2::XMLElement *map_tag = root->FirstChildElement("map");
-    if (!map.getMap(map_tag)) {
-        std::cout << "ERROR: appeared while parsing map tag\n";
-        return false;
-    }
+    map.getMap(map_tag);
 
     tinyxml2::XMLElement *options_tag = root->FirstChildElement("options");
-    if (!options.getOptions(options_tag)) {
-        std::cout << "ERROR: appeared while parsing options tag\n";
-        return false;
-    }
-
-    return true;
+    options.getOptions(options_tag);
 }
 
-void Mission::SetOptions(double hweight, bool anytime) {
+void Mission::SetOptions(double hweight) {
     if (hweight < 1.0) {
         throw std::invalid_argument("Invalid value of heuristic weight");
     }
 
-    options.anytime = anytime;
+    options.anytime = true;
     options.hweight = hweight;
+}
+
+void Mission::SetOptions(const std::optional<double>& hweight) {
+    if (hweight) {
+        SetOptions(hweight);
+    }
 }
 
 void Mission::CreateSearch() {

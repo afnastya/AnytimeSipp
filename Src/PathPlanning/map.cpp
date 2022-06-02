@@ -8,24 +8,24 @@
 Map::Map() {
 }
 
-bool Map::getMap(tinyxml2::XMLElement* map_tag) {
+void Map::getMap(tinyxml2::XMLElement* map_tag) {
     tinyxml2::XMLElement *element = map_tag->FirstChildElement();
 
     if (!element) {
-        std::cout << "ERROR: nothing in map tag\n";
-        return false;
+        throw std::invalid_argument("ERROR: nothing in map tag");
     }
 
+    // Parsing map information: width, height, start and goal positions
     std::vector<int*> data_ptrs = {&width, &height, &start_j, &start_i, &goal_j, &goal_i};
     for (auto data_ptr : data_ptrs) {
-        if (element->QueryIntText(data_ptr) != tinyxml2::XMLError::XML_SUCCESS || *data_ptr < 0) {
-            return false;
+        if (element->QueryIntText(data_ptr) != tinyxml2::XMLError::XML_SUCCESS || *data_ptr <= 0) {
+            throw std::invalid_argument("ERROR: invalid value of the width, height, start of goal position");
         }
 
         element = element->NextSiblingElement();
         if (element == nullptr) {
-            std::cout << "ERROR: less children of 'map' tag than expected, some map info is missing\n";
-            return false;
+            throw std::invalid_argument("ERROR: less children of 'map' tag than expected, "
+                                        "some map info is missing");
         }
     }
 
@@ -39,16 +39,14 @@ bool Map::getMap(tinyxml2::XMLElement* map_tag) {
     tinyxml2::XMLElement *row = element->FirstChildElement();
     for (int i = 0; i < height; ++i) {
         if (row == nullptr) {
-            std::cout << "ERROR: less rows in grid than expected\n";
-            return false;
+            throw std::invalid_argument("ERROR: less rows in grid than expected");
         }
 
         std::stringstream stream(row->FirstChild()->Value());
         for (int j = 0; j < width; ++j) {
             bool isObstacle;
             if (!(stream >> isObstacle)) {
-                std::cout << "ERROR: less columns in row #" << i + 1 << " than expected\n";
-                return false;
+                throw std::invalid_argument(std::string("ERROR: less columns in row #") + std::to_string(i + 1) + " than expected");
             }
 
             if (isObstacle) {
@@ -70,11 +68,20 @@ bool Map::getMap(tinyxml2::XMLElement* map_tag) {
             point->QueryIntAttribute("y", &y);
             point->QueryDoubleAttribute("time", &time);
 
+            if (!dynamicObstacles.back().path.empty()) {
+                const auto& previousPoint = dynamicObstacles.back().path.back();
+                int distance = getDistance(x - 1, y - 1, previousPoint.x, previousPoint.y);
+
+                if ((distance == 0 && (time * cost - previousPoint.time) <= 0)
+                    || (distance != 0 && distance != (time * cost - previousPoint.time))) {
+                        // std::cout << x << ", " << y << ", " << time << ", " << distance << ", " << previousPoint.time << ", " << time * cost - previousPoint.time << std::endl;
+                        throw std::invalid_argument("ERROR: invalid path representation");
+                }
+            }
+
             dynamicObstacles.back().path.emplace_back(x - 1, y - 1, time * cost);
         }
     }
-
-    return true;
 }
 
 int Map::getCost() const {
